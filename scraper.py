@@ -1,32 +1,30 @@
-import requests
 import re
-from src.utilities import *
+
 # locating elements from HTML using selenium https://www.youtube.com/watch?v=b5jt2bhSeXs
 import csv
 import random
 from bs4 import BeautifulSoup
-import json
 from requestproxy import send_request
-from Captcha import captcha_solver
-from src.utilities import Utilities
+import utilities
 # TODO: Elian
-# - figure out why hcaptcha is not submitting
+
 # - figure out why moving the random city choice outside of the for loop breaks the program
-# - extract email after hcaptcha is solved
+
 # - Update README and upload to github
 # - Find a way to fix the json file so that it is framed --> fixed this but I wont be able to test it works until I finish captcha
 # - Figure out why the csv writing is not contained on a single line
 # - reformat how the program writes to csv so it looks like what Dr. Bryan gave me
 
 
-utils = Utilities()
+utils = utilities.Utilities()
 
 cities = ['nyc', 'losangeles', 'chicago', 'houston', 'phoenix', 'philadelphia', 'sanantonio', 'sandiego', 'dallas',
           'sfbay']
 finads = []
 
 # This gives a list of ad urls we have already scraped, so that we don't re-scrape them
-with open('housingData.csv', encoding='utf-8', errors='ignore') as f:
+# if not utils.is_empty_csv('housingData.csv'):
+with open('../housingData.csv', encoding='utf-8', errors='ignore') as f:
     csv_reader = csv.reader((l.replace('\0', '') for l in f), delimiter=',')
 
     next(csv_reader)
@@ -56,25 +54,25 @@ CITIES = ["auburn", "bham", "dothan", "shoals", "gadsden", "huntsville", "mobile
 def city_ads(city, soup):
     # After we get the code working we will add this so that it works for whatever city we choose
     if city == 'nyc':
-        return re.findall(pattern=re.compile('(?<=")\S*nyc.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*newyork.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'losangeles':
-        return re.findall(pattern=re.compile('(?<=")\S*losangeles.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*losangeles.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'chicago':
-        return re.findall(pattern=re.compile('(?<=")\S*chicago.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*chicago.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'houston':
-        return re.findall(pattern=re.compile('(?<=")\S*houston.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*houston.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'phoenix':
-        return re.findall(pattern=re.compile('(?<=")\S*phoenix.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*phoenix.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'philadelphia':
-        return re.findall(pattern=re.compile('(?<=")\S*philadelphia.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*philadelphia.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'sanantonio':
-        return re.findall(pattern=re.compile('(?<=")\S*sanantonio.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*sanantonio.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'sandiego':
-        return re.findall(pattern=re.compile('(?<=")\S*sandiego.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*sandiego.craigslist.org/\S*(?=")'), string=str(soup))
     elif city == 'dallas':
-        return re.findall(pattern=re.compile('(?<=")\S*dallas.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*dallas.craigslist.org/\S*(?=")'), string=str(soup))
     else:
-        return re.findall(pattern=re.compile('(?<=")\S*sfbay.craigslist.org/apa/d\S*(?=")'), string=str(soup))
+        return re.findall(pattern=re.compile('(?<=")\S*sfbay.craigslist.org/\S*(?=")'), string=str(soup))
 
 # def extract_attrs(soup):
 #     spans = soup.find_all('p', attrs={"class":"attrgroup"})
@@ -269,22 +267,34 @@ def adscraper(n=1000):
             'https://' + city + '.craigslist.org/search/apa?postedToday=1&bundleDuplicates=1&min_price=5&availabilityMode=0&sale_date=all+dates',
             scraper='default')
         soup = BeautifulSoup(r.content, 'html.parser')
-        ads = city_ads(city, soup)  # extracts ads for correct city
+        ads = utils.scan_links(city_ads(city, soup))  # extracts ads for correct city
         entrynum = 0
 
         print('Random city chosen:', city)
         print("All ads acquired", len(ads))
-        # goes through each page
-        while re.search(pattern=re.compile('search and you will find'), string=str(soup)) == None:
-            r = send_request('https://' + city + '.craigslist.org/d/apartments-housing-for-rent/search/apa?s=' + str(
-                entrynum) + '&availabilityMode=0&bundleDuplicates=1&postedToday=1', scraper='default')
-            entrynum = entrynum + 120
+
+        # while re.search(pattern=re.compile('search and you will find'), string=str(soup)) == None:
+        #     r = send_request('https://' + city + '.craigslist.org/d/apartments-housing-for-rent/search/apa?s=' + str(
+        #         entrynum) + '&availabilityMode=0&bundleDuplicates=1&postedToday=1', scraper='default')
+        #     entrynum = entrynum + 120
+        #     soup = BeautifulSoup(r.content, 'html.parser')
+        #     ads.extend(ads)
+        while True:
+            r = send_request('https://' + city + '.craigslist.org/d/apartments-housing-for-rent/search/apa?s=' + str(entrynum), scraper='default')
+            if r.status_code != 200 or entrynum > n:
+                print("LEAVING WHILE LOOP!")
+                break
+            entrynum += 120
             soup = BeautifulSoup(r.content, 'html.parser')
-            ads.extend(ads)
+            new_ads = utils.scan_links(city_ads(city,soup))
+            print(ads)
+            ads.extend(new_ads)
 
         # removes duplicates
+        print("len ads before removing duplicates:", len(ads))
+        print("len ads when we make a set:", len(set(ads)))
         ads = list(dict.fromkeys(ads))
-
+        print("len ads after removing duplicates:", len(ads))
         # removes already scraped ads
         remove_scraped_ads(ads)
 
@@ -296,8 +306,10 @@ def adscraper(n=1000):
             send_request_ad += 1
             print("Successfully gathered ads:", send_request_ad)
             ID, body, city, coords, dateposted, dateupdated, housing, img, jsondata, price, region, title, attrs, \
-            address, available, bed_bath_count, square_feet = utils.extract_json_and_mdeta(
+            address, available, bed_bath_count, square_feet, phone_number = utils.extract_json_and_mdeta(
                 ad, city)
+            #this will see if there is a phone number in the text body
+
 
             # TODO: uncomment this if captcha works
             # try:
@@ -305,12 +317,12 @@ def adscraper(n=1000):
             #     print("email:", email)
             # except:
             #     continue
-            with open('housingData.csv', 'a+', newline='',encoding='utf8') as f:
+            with open('../housingData.csv', 'a+', newline='', encoding='utf8') as f:
                 csv_writer = csv.writer(f)
                 try:
                     csv_writer.writerow(
                         [ad, ID, body, city, coords, dateposted, dateupdated, housing, img, jsondata, price, region, title,\
-           address, available, bed_bath_count, square_feet])
+           address, available, bed_bath_count, square_feet, phone_number])
                 except Exception as e:
                     finads.append(ad)
                     continue
