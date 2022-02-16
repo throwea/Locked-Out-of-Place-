@@ -14,7 +14,6 @@ import utilities
 # - figure out why moving the random city choice outside of the for loop breaks the program
 
 # - Update README and upload to github
-# - Find a way to fix the json file so that it is framed --> fixed this but I wont be able to test it works until I finish captcha
 # - Figure out why the csv writing is not contained on a single line
 # - reformat how the program writes to csv so it looks like what Dr. Bryan gave me
 
@@ -25,15 +24,16 @@ cities = ['nyc', 'losangeles', 'chicago', 'houston', 'phoenix', 'philadelphia', 
           'sfbay']
 finads = []
 
-# This gives a list of ad urls we have already scraped, so that we don't re-scrape them
-# if not utils.is_empty_csv('housingData.csv'):
-with open('housingData.csv', encoding='utf-8', errors='ignore') as f:
-    csv_reader = csv.reader((l.replace('\0', '') for l in f), delimiter=',')
+# This gives a list of ad urls we have already scraped, so that we don't re-scrape them === maybe we remove this line
+# and remove the duplicate (ads scraped more than once) in the notebook so we can delete this code
 
-    next(csv_reader)
-    for lines in csv_reader:
-        # print(lines)
-        finads.append(lines[1])
+# with open('housingData.csv', encoding='utf-8', errors='ignore') as f:
+#     csv_reader = csv.reader((l.replace('\0', '') for l in f), delimiter=',')
+#
+#     next(csv_reader)
+#     for lines in csv_reader:
+#         # print(lines)
+#         finads.append(lines[1])
 
 import sys
 import os
